@@ -9,6 +9,7 @@
 # load packages. 
 library(tidyverse)
 library(lubridate)
+library(lazytrade)
 
 # ----------- Main Steps -----------------
 # -- Read trading results from Terminal 1
@@ -26,9 +27,10 @@ library(lubridate)
 # *************Used Functions******************
 # =============================================
 # *** make sure to customize this path
-source("E:/trading/Git/R_tradecontrol/get_profit_factorDF.R")
-source("E:/trading/Git/R_tradecontrol/import_data.R")
-source("E:/trading/Git/R_tradecontrol/check_if_optimize.R")
+# Update: below functions are added to the R package
+#source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/get_profit_factorDF.R")
+#source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data.R")
+#source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/check_if_optimize.R")
 
 # =============================================
 # ************End of Used Functions************
@@ -38,24 +40,27 @@ source("E:/trading/Git/R_tradecontrol/check_if_optimize.R")
 # Define terminals path addresses, from where we are going to read/write data
 # -------------------------
 # terminal 1 path
-path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/tester/Files/"
+path_T1 <- "C:/Program Files (x86)/FxPro - Terminal1/MQL4/Files/"
 
 # trading system project folder
-path_PRJCT_1 <- "E:/trading/Git/FALCON_B/"
-path_PRJCT_2 <- "E:/trading/Git/FALCON_D/"
-path_PRJCT_3 <- "E:/trading/Git/POP/"
+# NOTE:
+# Robot repository must have a folder with file TEST/Setup.csv
+# File Setup.csv should contain magic numbers of the working systems 
+path_PRJCT_1 <- "C:/Users/fxtrams/Documents/000_TradingRepo/FALCON_A/"
+path_PRJCT_2 <- "C:/Users/fxtrams/Documents/000_TradingRepo/FALCON_F2/"
+path_PRJCT_3 <- "C:/Users/fxtrams/Documents/000_TradingRepo/FALCON_B/"
 
 # -------------------------
-# read data from trades in terminal 2
+# read data from trades in terminal 1
 # -------------------------
 # # # uncomment code below to test functionality without MT4 platform installed
-# DFT1 <- try(import_data(trade_log_file = "_TEST_DATA/OrdersResultsT1.csv",
-#                         demo_mode = T),
-#             silent = TRUE)
-DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
+#' DFT1 <- try(import_data(trade_log_file = "_TEST_DATA/OrdersResultsT1.csv",
+#'                         demo_mode = T),
+#'             silent = TRUE)
+DFT1 <- try(import_data(path_T1, "OrdersResultsT1.csv"), silent = TRUE)
 
 # -------------------------
-# data frame T2 analysis and manipulation
+# data frame T1 analysis and manipulation
 # -------------------------
 
 #### SORTING AND DECIDE IF SYSTEM NEEDS TO BE RE-TRAINED/RE-OPTIMIZED #### -----------------------------
@@ -63,30 +68,34 @@ DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
 #
 ### DEMO MODE 
 # Uncomment code chunk below
-# DFT1 %>% check_if_optimize(num_trades_to_consider = 10,
+# DFT1 %>% check_if_optimize(num_trades_to_consider = 3,
 #                            profit_factor_limit = 0.7,
-#                            demo_mode = T)
+#                            demo_mode = TRUE,
+#                            write_mode = FALSE)
 
-#
+# Results will be written to the file in the respective folder
 ### PROJECT 1
 #
-DFT2 %>% check_if_optimize(path_trading_robot = path_PRJCT_1,
-                           num_trades_to_consider = 20,
-                           profit_factor_limit = 0.7)
+DFT1 %>% check_if_optimize(path_trading_robot = path_PRJCT_1,
+                           num_trades_to_consider = 10,
+                           profit_factor_limit = 1.2,
+                           demo_mode = FALSE,
+                           write_mode = TRUE)
 #
 ### PROJECT 2
 #
-DFT2 %>% check_if_optimize(path_trading_robot = path_PRJCT_2,
+DFT1 %>% check_if_optimize(path_trading_robot = path_PRJCT_2,
                            num_trades_to_consider = 20,
-                           profit_factor_limit = 0.7)
+                           profit_factor_limit = 1.0,
+                           demo_mode = FALSE,
+                           write_mode = TRUE)
+##======================================== end of script
 
-
-#
 ### PROJECT 3
 #
-DFT2 %>% check_if_optimize(path_trading_robot = path_PRJCT_3,
-                           num_trades_to_consider = 20,
-                           profit_factor_limit = 0.7)
-
-
+DFT1 %>% check_if_optimize(path_trading_robot = path_PRJCT_3,
+                           num_trades_to_consider = 15,
+                           profit_factor_limit = 1.0,
+                           demo_mode = FALSE,
+                           write_mode = TRUE)
 ##======================================== end of script

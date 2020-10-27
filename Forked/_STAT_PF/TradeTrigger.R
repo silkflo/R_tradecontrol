@@ -9,10 +9,10 @@ library(tidyverse) #install.packages("tidyverse")
 library(lubridate) #install.packages("lubridate") 
 
 # ----------- Applied Logic -----------------
-# -- Read trading results from Terminal 2
-# -- Split trading results from Terminal 2 into categories using profit factor
-# -- Depend on conditions of LAST 10 trades in Terminal 2, allow trades in Terminal 3
-#   -- on last 10 trades in T2
+# -- Read trading results from Terminal 1
+# -- Split trading results from Terminal 1 into categories using profit factor
+# -- Depend on conditions of LAST 10 trades in Terminal 1, allow trades in Terminal 3
+#   -- on last 10 trades in T1
 #   -- enable T3 when Profit factor of 10 trades > 2
 #   -- disable T3 when Profit Factor of 10 trades < 1.6
 # -- Start/Stop trades on Terminals at MacroEconomic news releases (will be covered in Course #5)
@@ -29,32 +29,31 @@ library(lubridate) #install.packages("lubridate")
 # Used Functions
 #-----------------
 # *** make sure to customize this path
-source("E:/trading/Git/R_tradecontrol/import_data.R")
-source("E:/trading/Git/R_tradecontrol/get_profit_factorDF.R")
-source("E:/trading/Git/R_tradecontrol/writeCommandViaCSV.R")
+source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data.R")
+source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/get_profit_factorDF.R")
+source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/writeCommandViaCSV.R")
 
 # -------------------------
 # Define terminals path addresses, from where we are going to read/write data
 # -------------------------
-# terminal 2 path *** make sure to customize this path 
-#(when run in live instead of EA path might be ./MQL4/Files)
-path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/tester/Files/"
+# terminal 1 path *** make sure to customize this path
+path_T1 <- "C:/Program Files (x86)/FxPro - Terminal1/MQL4/Files/"
 # terminal 3 path *** make sure to customize this path
-path_T3 <- "C:/Program Files (x86)/AM MT4 - Terminal 3/tester/Files/"
+path_T3 <- "C:/Program Files (x86)/FxPro - Terminal3/MQL4/Files/"
 
 # -------------------------
-# read data from trades in terminal 2
+# read data from trades in terminal 1
 # -------------------------
 # # uncomment code below to test functionality without MT4 platform installed
 # DFT1 <- try(import_data(trade_log_file = "_TEST_DATA/OrdersResultsT1.csv",
 #                         demo_mode = T),
 #             silent = TRUE)
 
-DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"),silent = TRUE)
+DFT1 <- try(import_data(path_T1, "OrdersResultsT1.csv"),silent = TRUE)
 
 
 # get last 10 trades for each Magic system and arrange orders to have descending order
-DFT2_L <- DFT2 %>%  # filtered to contain last 10 orders for each system
+DFT1_L <- DFT1 %>%  # filtered to contain last 10 orders for each system
   group_by(MagicNumber) %>% 
   arrange(MagicNumber, desc(OrderCloseTime)) %>% 
   filter(row_number() <= 11) # +1 for the function to work
@@ -63,21 +62,21 @@ DFT2_L <- DFT2 %>%  # filtered to contain last 10 orders for each system
 # Implementation of logic
 #-----------------
 #### SORTING AND DECIDE TRADING ON THE DEMO ACCOUNT #### -----------------------------
-# DEMO always allow trades in Terminal 2                               
-DFT2_L %>%
+# DEMO always allow trades in Terminal 1                               
+DFT1_L %>%
   group_by(MagicNumber) %>%
   summarise(nOrders = n()) %>%
   select(MagicNumber) %>%
   mutate(IsEnabled = 1) %>% 
   # Write command "allow"
-  writeCommandViaCSV(path_T2)
+  writeCommandViaCSV(path_T1)
 
 #### DECIDE IF TRADING ON THE T3 ACCOUNT #### -----------------------------
 # Last 10 orders on DEMO && pr.fact >= 2 start trade T3
-DFT2_L %>%
+DFT1_L %>%
   get_profit_factorDF(10) %>% 
   ungroup() %>% 
-  filter(PrFact >= 0.1) %>% 
+  filter(PrFact >= 2) %>% 
   select(MagicNumber) %>% 
   mutate(MagicNumber = MagicNumber + 200, IsEnabled = 1) %>% 
   # Write command "allow"
@@ -85,7 +84,7 @@ DFT2_L %>%
 
 #### DECIDE IF NOT TO TRADING ON THE T3 ACCOUNT #### -----------------------------
 # 4. Last 10 orders on DEMO && pr.fact < 1.6 stop trade T3
-DFT2_L %>%
+DFT1_L %>%
   get_profit_factorDF(10) %>% 
   ungroup() %>% 
   filter(PrFact < 1.6) %>% 
@@ -134,12 +133,7 @@ if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
         group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
         # write commands to disable systems
         writeCommandViaCSV(path_T1)}
-    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-    if(!class(DFT3)[1]=='try-error'){
-      DFT3 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-        writeCommandViaCSV(path_T3)}
-    
+   
   }
   
 }

@@ -145,7 +145,7 @@ policy(model)
 Policy of the model can be used to select best action based on the current state. For example:
 
 ```{r}
-next_action <- policy(model)["s2"]
+next_action <- policy(model)["s1"]
 next_action
 ```
 
@@ -172,7 +172,7 @@ data_new <- sampleExperience(N = 1000, env = env, states = states, actions = act
                              model = model, actionSelection = "epsilon-greedy", 
                              control = control)
 
-head(data_new, 6)
+head(data_new, 2)
 
 ```
 

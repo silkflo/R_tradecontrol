@@ -1,31 +1,25 @@
-# -------------------------
-# Perform RL and generate model policy
-# -------------------------
-# FUNCTION generate_RL_policy
-
-#' This function will perform Reinforcement Learning using Trading Data. It should start working directly from the start
+#' Function to log RL progress. Function will record Q values during updating of the model
 #'
-#' @param x - Dataframe containing trading data 
+#' @param x - dataframe containing trading results
 #' @param states 
 #' @param actions 
 #' @param control 
 #'
-#' @return Function returns data frame with reinforcement learning model policy
+#' @return
 #' @export
 #'
 #' @examples
-generate_RL_policy <- function(x, states, actions, control){
+log_RL_progress <- function(x, states, actions, control){
+  
   require(tidyverse)
   require(ReinforcementLearning)
   require(magrittr)
-  # uncomment to debug code inside the function
-  #  x <- read_csv("C:/Program Files (x86)/AM MT4 - Terminal 2/tester/files/OrdersResultsT2.csv",  col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"), col_types = "iiccdci")
-  #  x <- trading_systemDF
-  # rm(model, df_tupple)
-  # Define state and action sets for Reinforcement Learning
+  
+  # x <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
   # states <- c("tradewin", "tradeloss")
-  # actions <- c("ON", "OFF") # 'ON' and 'OFF' are referring to decision to trade with Slave system
+  # actions <- c("ON", "OFF")
   # control <- list(alpha = 0.7, gamma = 0.3, epsilon = 0.1)
+  
   # add dummy tupples with states and actions with minimal reward
   d_tupple <- data.frame(State = states,
                          Action = rep(actions,length(states)),
@@ -37,13 +31,13 @@ generate_RL_policy <- function(x, states, actions, control){
                                  s_new = "NextState",iter = 1, control = control)
   
   # add rows of the x one by one to gradually update this model
-  for (i in 2:nrow(x)) {
-    # i <- 2
+  for (i in 2:310) {
+    # i <- 6
     # State 
     State <- x[i-1,] %>% mutate(State = ifelse(Profit>0, "tradewin", ifelse(Profit<0, "tradeloss", NA))) %$% State
     
     # predict on i
-    Action <- policy(model)[State]
+    Action <- computePolicy(model)[State]
     
     # reward
     Reward <- x[i,]$Profit
@@ -63,17 +57,23 @@ generate_RL_policy <- function(x, states, actions, control){
     model <- ReinforcementLearning(df_tupple, s = "State", a = "Action", r = "Reward",
                                    s_new = "NextState", control = control, iter = 1, model = model)
     #model$Q
+    
+      # generate dataframe with reward sequence of this learning
+      df_q <- data.frame(alpha = control$alpha, gamma = control$gamma, epsilon = control$epsilon, 
+                         trstate = model$States, rewardseq = model$Q, totreward = model$Reward)
+    
+      # create dataframe that will append data to previous records
+      if(!exists("df_Q")){df_Q <- df_q} else {
+        df_Q <- bind_rows(df_Q, df_q)
+      }
+      
     #print(i)
+    
   }
-  # extract custom policy from the obtained dataset
-  df_Q <- model$Q %>% as.data.frame() %>% 
-    # create column with market periods
-    mutate(TradeState = row.names(.)) %>% 
-    # interpret policy as defined logic, value at ON must be >= 0!
-    mutate(Policy = ifelse(ON <= 0, "OFF", ifelse(ON > OFF, "ON", ifelse(OFF > ON, "OFF", NA)))) %>% 
-    select(TradeState, Policy)
   
-   #plot(model)
-   return(df_Q)
-
+  
+  #plot(model)
+  # return log of RL model
+  return(df_Q)
+  
 }

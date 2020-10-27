@@ -19,8 +19,8 @@ generate_RL_policy <- function(x, states, actions, control){
   require(ReinforcementLearning)
   require(magrittr)
   # uncomment to debug code inside the function
-  #  x <- read_csv("C:/Program Files (x86)/AM MT4 - Terminal 2/tester/files/OrdersResultsT2.csv",  col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"), col_types = "iiccdci")
-  #  x <- trading_systemDF
+  # x <- read_rds("_TEST_DATA/data_trades.rds")
+  # x <- trading_systemDF
   # rm(model, df_tupple)
   # Define state and action sets for Reinforcement Learning
   # states <- c("tradewin", "tradeloss")
@@ -64,15 +64,20 @@ generate_RL_policy <- function(x, states, actions, control){
                                    s_new = "NextState", control = control, iter = 1, model = model)
     #model$Q
     #print(i)
+    
   }
+  
+  #plot(model)
+  
   # extract custom policy from the obtained dataset
   df_Q <- model$Q %>% as.data.frame() %>% 
     # create column with market periods
     mutate(TradeState = row.names(.)) %>% 
     # interpret policy as defined logic, value at ON must be >= 0!
     mutate(Policy = ifelse(ON <= 0, "OFF", ifelse(ON > OFF, "ON", ifelse(OFF > ON, "OFF", NA)))) %>% 
-    select(TradeState, Policy)
-  
+    select(TradeState, Policy) 
+    # record this object for the function debugging
+    # write_rds(df_Q, "_TEST_DATA/TradeStatePolicy.rds")
    #plot(model)
    return(df_Q)
 

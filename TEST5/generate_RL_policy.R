@@ -8,7 +8,6 @@
 #' @param x - Dataframe containing trading data 
 #' @param states 
 #' @param actions 
-#' @param control 
 #'
 #' @return Function returns data frame with reinforcement learning model policy
 #' @export
@@ -17,13 +16,12 @@
 generate_RL_policy <- function(x, states, actions, control){
   require(tidyverse)
   require(ReinforcementLearning)
-  require(magrittr)
   # uncomment to debug code inside the function
-  #  x <- read_csv("C:/Program Files (x86)/AM MT4 - Terminal 2/tester/files/OrdersResultsT2.csv",  col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"), col_types = "iiccdci")
-  #  x <- trading_systemDF
+  # x <- read_rds("test_data/data_trades_markettype.rds")
+  # x <- trading_systemDF
   # rm(model, df_tupple)
   # Define state and action sets for Reinforcement Learning
-  # states <- c("tradewin", "tradeloss")
+  # states <- c("BUN", "BUV", "BEN", "BEV", "RAN", "RAV")
   # actions <- c("ON", "OFF") # 'ON' and 'OFF' are referring to decision to trade with Slave system
   # control <- list(alpha = 0.7, gamma = 0.3, epsilon = 0.1)
   # add dummy tupples with states and actions with minimal reward
@@ -37,19 +35,16 @@ generate_RL_policy <- function(x, states, actions, control){
                                  s_new = "NextState",iter = 1, control = control)
   
   # add rows of the x one by one to gradually update this model
-  for (i in 2:nrow(x)) {
-    # i <- 2
+  for (i in 1:nrow(x)) {
+    # i <- 1
     # State 
-    State <- x[i-1,] %>% mutate(State = ifelse(Profit>0, "tradewin", ifelse(Profit<0, "tradeloss", NA))) %$% State
-    
+    State <- x[i,]$MarketType
     # predict on i
-    Action <- policy(model)[State]
-    
+    Action <- policy(model)[x[i,]$MarketType]
     # reward
     Reward <- x[i,]$Profit
-    
     # next state
-    NextState <- x[i, ] %>% mutate(State = ifelse(Profit>0, "tradewin", ifelse(Profit<0, "tradeloss", NA))) %$% State
+    NextState <- x[i+1, ]$MarketType
     # combine data as dataframe
     i_tupple <- data.frame(State,Action,Reward,NextState,row.names = i, stringsAsFactors = F) %>%
       # change factor column to as.character (required by RL function)
@@ -68,10 +63,10 @@ generate_RL_policy <- function(x, states, actions, control){
   # extract custom policy from the obtained dataset
   df_Q <- model$Q %>% as.data.frame() %>% 
     # create column with market periods
-    mutate(TradeState = row.names(.)) %>% 
+    mutate(MarketType = row.names(.)) %>% 
     # interpret policy as defined logic, value at ON must be >= 0!
     mutate(Policy = ifelse(ON <= 0, "OFF", ifelse(ON > OFF, "ON", ifelse(OFF > ON, "OFF", NA)))) %>% 
-    select(TradeState, Policy)
+    select(MarketType, Policy)
   
    #plot(model)
    return(df_Q)
