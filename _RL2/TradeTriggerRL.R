@@ -77,7 +77,8 @@ DFT2_sum <- DFT2 %>%
 
 # create rds file needed with the alpha,gamma , epsilon best value into control folder
 # WARNING : this function take a lot of time to be executed 
-Adapt_RL_control(DFT2,path_T2,path_control_files)
+# if there is no control variab le existing execute this function
+# Adapt_RL_control(DFT2,path_T2,path_control_files)
 ### ============== FOR EVERY TRADING SYSTEM ###
 for (i in 1:length(vector_systems)) {
   # tryCatch() function will not abort the entire for loop in case of the error in one iteration

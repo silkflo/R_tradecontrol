@@ -38,9 +38,9 @@ source("E:/trading/Git/R_tradecontrol/writeCommandViaCSV.R")
 # -------------------------
 # terminal 2 path *** make sure to customize this path 
 #(when run in live instead of EA path might be ./MQL4/Files)
-path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/tester/Files/"
+path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
 # terminal 3 path *** make sure to customize this path
-path_T3 <- "C:/Program Files (x86)/AM MT4 - Terminal 3/tester/Files/"
+path_T3 <- "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/"
 
 # -------------------------
 # read data from trades in terminal 2
@@ -77,9 +77,9 @@ DFT2_L %>%
 DFT2_L %>%
   get_profit_factorDF(10) %>% 
   ungroup() %>% 
-  filter(PrFact >= 0.1) %>% 
+  filter(PrFact >= 1.2) %>% 
   select(MagicNumber) %>% 
-  mutate(MagicNumber = MagicNumber + 200, IsEnabled = 1) %>% 
+  mutate(MagicNumber = MagicNumber + 100, IsEnabled = 1) %>% 
   # Write command "allow"
   writeCommandViaCSV(path_T3)
 
@@ -88,9 +88,9 @@ DFT2_L %>%
 DFT2_L %>%
   get_profit_factorDF(10) %>% 
   ungroup() %>% 
-  filter(PrFact < 1.6) %>% 
+  filter(PrFact < 1.2) %>% 
   select(MagicNumber) %>% 
-  mutate(MagicNumber = MagicNumber + 200, IsEnabled = 0) %>% 
+  mutate(MagicNumber = MagicNumber + 100, IsEnabled = 0) %>% 
   # Write command "allow"
   writeCommandViaCSV(path_T3)
 
@@ -110,36 +110,38 @@ DFT3 <- try(import_data(path_T3, "OrdersResultsT3.csv"),silent = TRUE)
 # stopping all systems when macroeconomic event is present
 # this will be covered in the Course #5 of the Lazy Trading Series!
 # -------------------------
-if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
-  DF_NT <- read_csv(file= file.path(path_T1, "01_MacroeconomicEvent.csv"), col_types = "i")
-  if(DF_NT[1,1] == 1) {
-    # disable trades
-    if(!class(DFT1)[1]=='try-error'){
-      DFT1 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-        # write commands to disable systems
-        writeCommandViaCSV(path_T1)}
-    if(!class(DFT3)[1]=='try-error'){
-      DFT3 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-        writeCommandViaCSV(path_T3)}
-    
-    
-  }
-  # enable systems of T1 in case they were disabled previously
-  if(DF_NT[1,1] == 0) {
-    # enable trades
-    if(!class(DFT1)[1]=='try-error'){
-      DFT1 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-        # write commands to disable systems
-        writeCommandViaCSV(path_T1)}
-    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-    if(!class(DFT3)[1]=='try-error'){
-      DFT3 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-        writeCommandViaCSV(path_T3)}
-    
-  }
-  
-}
+
+
+#if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
+#  DF_NT <- read_csv(file= file.path(path_T1, "01_MacroeconomicEvent.csv"), col_types = "i")
+#  if(DF_NT[1,1] == 1) {
+#    # disable trades
+#    if(!class(DFT1)[1]=='try-error'){
+#      DFT1 %>%
+#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
+#        # write commands to disable systems
+#        writeCommandViaCSV(path_T1)}
+#    if(!class(DFT3)[1]=='try-error'){
+#      DFT3 %>%
+#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
+#        writeCommandViaCSV(path_T3)}
+#    
+#    
+#  }
+#  # enable systems of T1 in case they were disabled previously
+#  if(DF_NT[1,1] == 0) {
+#    # enable trades
+#    if(!class(DFT1)[1]=='try-error'){
+#      DFT1 %>%
+#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
+#        # write commands to disable systems
+#        writeCommandViaCSV(path_T1)}
+#    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
+#    if(!class(DFT3)[1]=='try-error'){
+#      DFT3 %>%
+#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
+#        writeCommandViaCSV(path_T3)}
+#    
+#  }
+#  
+#}
