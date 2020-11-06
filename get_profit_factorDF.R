@@ -12,7 +12,7 @@
 #' @examples
 get_profit_factorDF <- function(x, num_orders){
   # generate DF with only MagicNumbers when > 10 trades and all trades are losers
-  # x <- read_csv("C:/Program Files (x86)/AM MT4 - Terminal 2/tester/files/OrdersResultsT2.csv",  col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"), col_types = "iiccdci")
+  # x <- read_csv("C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/files/OrdersResultsT2.csv",  col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"), col_types = "iiccdci")
   # num_orders <- 10
   DF_L <- x %>%
     group_by(MagicNumber) %>%

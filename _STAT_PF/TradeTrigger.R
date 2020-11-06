@@ -94,6 +94,10 @@ DFT2_L %>%
   # Write command "allow"
   writeCommandViaCSV(path_T3)
 
+
+ifelse(get_profit_factorDF(DFT2_L,10)< 1.2, flag<-1, flag <-0)
+
+
 #write_rds(DFT1_L, "test_data_profit_factorDF.rds")
 ##========================================
 # -------------------------
@@ -112,36 +116,51 @@ DFT3 <- try(import_data(path_T3, "OrdersResultsT3.csv"),silent = TRUE)
 # -------------------------
 
 
-#if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
-#  DF_NT <- read_csv(file= file.path(path_T1, "01_MacroeconomicEvent.csv"), col_types = "i")
-#  if(DF_NT[1,1] == 1) {
-#    # disable trades
-#    if(!class(DFT1)[1]=='try-error'){
-#      DFT1 %>%
-#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-#        # write commands to disable systems
-#        writeCommandViaCSV(path_T1)}
-#    if(!class(DFT3)[1]=='try-error'){
-#      DFT3 %>%
-#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-#        writeCommandViaCSV(path_T3)}
-#    
-#    
+if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))& flag = 0){
+  DF_NT <- (read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici"))
+  DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 1)
+  
+  #if(DF_NT[1,1] == 1) {
+    # disable trades
+    if(!class(DF_NT)[1]=='try-error'){
+      DF_NT %>%
+        group_by(MagicNumber) %>%
+        select(MagicNumber) %>% 
+        mutate(IsEnabled = 0) %>% 
+        # write commands to disable systems
+        writeCommandViaCSV(path_T2)
+      }
+    if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
+      DF_NT %>%
+          group_by(MagicNumber) %>% 
+          inner_join(DFT3, by = "MagicNumber") %>%
+          select(MagicNumber) %>% 
+          mutate(IsEnabled = 0) %>% 
+          writeCommandViaCSV(path_T3)}
+    
+    
+ # }
+  # enable systems of T1 in case they were disabled previously
+ # if(DF_NT[1,1] == 0) {
+  DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
+  DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 0)
+      # enable trades
+    if(!class(DFT2)[1]=='try-error'){
+      DF_NT %>%
+        group_by(MagicNumber) %>% 
+        select(MagicNumber) %>% 
+        mutate(IsEnabled = 1) %>% 
+        # write commands to disable systems
+        writeCommandViaCSV(path_T2)}
+    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
+    if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
+      DF_NT %>%
+        group_by(MagicNumber) %>% 
+        inner_join(DFT3, by = "MagicNumber") %>%
+        select(MagicNumber) %>% 
+        mutate(IsEnabled = 1) %>% 
+        writeCommandViaCSV(path_T3)}
+    
 #  }
-#  # enable systems of T1 in case they were disabled previously
-#  if(DF_NT[1,1] == 0) {
-#    # enable trades
-#    if(!class(DFT1)[1]=='try-error'){
-#      DFT1 %>%
-#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-#        # write commands to disable systems
-#        writeCommandViaCSV(path_T1)}
-#    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-#    if(!class(DFT3)[1]=='try-error'){
-#      DFT3 %>%
-#        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-#        writeCommandViaCSV(path_T3)}
-#    
-#  }
-#  
-#}
+  
+}
