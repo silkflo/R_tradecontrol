@@ -116,12 +116,11 @@ DFT3 <- try(import_data(path_T3, "OrdersResultsT3.csv"),silent = TRUE)
 # -------------------------
 
 
-if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))& flag = 0){
+if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv")) & flag == 0){
   DF_NT <- (read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici"))
   DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 1)
   
-  #if(DF_NT[1,1] == 1) {
-    # disable trades
+      # disable trades
     if(!class(DF_NT)[1]=='try-error'){
       DF_NT %>%
         group_by(MagicNumber) %>%
@@ -136,12 +135,12 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))& flag = 0){
           inner_join(DFT3, by = "MagicNumber") %>%
           select(MagicNumber) %>% 
           mutate(IsEnabled = 0) %>% 
-          writeCommandViaCSV(path_T3)}
+          writeCommandViaCSV(path_T3)
+      }
     
     
- # }
+
   # enable systems of T1 in case they were disabled previously
- # if(DF_NT[1,1] == 0) {
   DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
   DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 0)
       # enable trades
@@ -159,8 +158,6 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))& flag = 0){
         inner_join(DFT3, by = "MagicNumber") %>%
         select(MagicNumber) %>% 
         mutate(IsEnabled = 1) %>% 
-        writeCommandViaCSV(path_T3)}
-    
-#  }
-  
+        writeCommandViaCSV(path_T3)
+      }
 }
