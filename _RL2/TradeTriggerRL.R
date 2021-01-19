@@ -77,9 +77,17 @@ DFT2_sum <- DFT2 %>%
 
 # create rds file needed with the alpha,gamma , epsilon best value into control folder
 # WARNING : this function take a lot of time to be executed 
-# if there is no control variab le existing execute this function
-# Adapt_RL_control(DFT2,path_T2,path_control_files)
+# if there is no control variable existing execute this function
+time_start <- Sys.time()
+# Is searching for the best parameter using brut force
+#------------------------------------------------
+Adapt_RL_control(DFT2,path_T2,path_control_files)
+#--------------------------------------------------
+
 ### ============== FOR EVERY TRADING SYSTEM ###
+
+
+
 for (i in 1:length(vector_systems)) {
   # tryCatch() function will not abort the entire for loop in case of the error in one iteration
   tryCatch({
@@ -109,7 +117,7 @@ for (i in 1:length(vector_systems)) {
   # epsilon - sampling rate    0.1 <- high sample| low sample  -> 0.9
   # iter 
   # ----- 
-  #control <- list(alpha = 0.3, gamma = 0.6, epsilon = 0.1)
+  # control <- list(alpha = 0.3, gamma = 0.6, epsilon = 0.1)
   # Use optimal control parameters found by auxiliary function
  
   control <- read_rds(paste0(path_control_files,"/", trading_system, ".rds"))
@@ -135,7 +143,11 @@ for (i in 1:length(vector_systems)) {
   
 }
 ### ============== END of FOR EVERY TRADING SYSTEM ###
-
+time_end <- Sys.time()
+#calculate total time difference in seconds
+time_total <- difftime(time_end,time_start,units="sec")
+#convert to numeric
+as.double(time_total)
 
 
 ##========================================
@@ -143,6 +155,8 @@ for (i in 1:length(vector_systems)) {
 # stopping all systems when macroeconomic event is present
 # this will be covered in the Course #5 of the Lazy Trading Series!
 # -------------------------
+
+#flag 1 means can not trade
 if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))){
   DF_NT <- (read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici"))
   DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 1)
@@ -163,14 +177,35 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))){
       inner_join(DFT3, by = "MagicNumber") %>%
       select(MagicNumber) %>% 
       mutate(IsEnabled = 0) %>% 
-      writeCommandViaCSV(path_T3)}
+      writeCommandViaCSV(path_T3)
+    }
   
   
-  # }
-  # enable systems of T1 in case they were disabled previously
-  # if(DF_NT[1,1] == 0) {
-  DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
+ 
+   
+ 
+   DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
   DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 0)
+  
+  MN <- DF_NT %>%
+        group_by(MagicNumber) %>%
+        select("MagicNumber")
+  
+  # delete rows from DF_NT if systemcontrol don't allow trade
+  for(i in nrow(MN))
+  {
+    # i <-1
+    magicNumber <- toString(MN[i,])
+    SC <- read_csv(file= file.path(path_T2, paste0("SystemControl",magicNumber,".csv")), col_types = "ii") 
+    SC <- as.data.frame(SC)
+    
+    if(SC$IsEnabled == 0){
+      DF_NT <- as.data.frame(DF_NT) %>%
+              filter(DF_NT$MagicNumber != magicNumber)
+    }
+  }
+  
+  
   # enable trades
   if(!class(DFT2)[1]=='try-error'){
     DF_NT %>%

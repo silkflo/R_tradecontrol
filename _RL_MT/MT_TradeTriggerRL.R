@@ -16,7 +16,7 @@ library(tidyverse) #install.packages("tidyverse")
 library(lubridate) #install.packages("lubridate") 
 library(ReinforcementLearning) #devtools::install_github("nproellochs/ReinforcementLearning")
 library(magrittr)
-
+library(lazytrade)
 # ----------- Main Steps -----------------
 # -- Read trading results from Terminal 1
 # -- Rearrange data for RL
@@ -37,61 +37,67 @@ library(magrittr)
 # Used Functions (to make code more compact). See detail of each function in the repository
 #-----------------
 # *** make sure to customize this path
-source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data.R") 
-source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data_mt.R")
-source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/_RL_MT/generate_RL_policy.R")
-source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/_RL_MT/record_policy.R")
-source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/writeCommandViaCSV.R")
+source("E:/trading/Git/R_tradecontrol/import_data.R") 
+source("E:/trading/Git/R_tradecontrol/import_data_mt.R")
+source("E:/trading/Git/R_tradecontrol/_RL_MT/generate_RL_policy.R")
+source("E:/trading/Git/R_tradecontrol/_RL_MT/record_policy.R")
+source("E:/trading/Git/R_tradecontrol/writeCommandViaCSV.R")
 
 # -------------------------
 # Define terminals path addresses, from where we are going to read/write data
 # -------------------------
-# terminal 1 path *** make sure to customize this path
-path_T1 <- "C:/Program Files (x86)/FxPro - Terminal1/MQL4/Files/"
+# terminal 2 path *** make sure to customize this path
+path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
 
 # terminal 3 path *** make sure to customize this path
-path_T3 <- "C:/Program Files (x86)/FxPro - Terminal3/MQL4/Files/"
+path_T3 <- "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/"
+
+# path where to read control parameters from
+path_control_files = "E:/trading/Git/R_tradecontrol/_RL2/control"
 
 # -------------------------
-# read data from trades in terminal 1
+# read data from trades in terminal 2
 # -------------------------
 # # uncomment code below to test functionality without MT4 platform installed
 # DFT1 <- try(import_data(trade_log_file = "_TEST_DATA/OrdersResultsT1.csv",
 #                         demo_mode = T),
 #             silent = TRUE)
-DFT1 <- try(import_data(path_T1, "OrdersResultsT1.csv"), silent = TRUE)
+DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
 # -------------------------
 # read data from trades in terminal 3
 # -------------------------
 DFT3 <- try(import_data(path_T3, "OrdersResultsT3.csv"), silent = TRUE)
 
 # Vector with unique Trading Systems
-vector_systems <- DFT1 %$% MagicNumber %>% unique() %>% sort()
+vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()
 
 # For debugging: summarise number of trades to see desired number of trades was achieved
-DFT1_sum <- DFT1 %>% 
+DFT2_sum <- DFT2 %>% 
   group_by(MagicNumber) %>% 
   summarise(Num_Trades = n(),
             Mean_profit = sum(Profit)) %>% 
   arrange(desc(Num_Trades))
+
+# find the best parameter for the RL
+#Adapt_RL_control(DFT2,path_T2,path_control_files)
 
 ### ============== FOR EVERY TRADING SYSTEM ###
 for (i in 1:length(vector_systems)) {
   # tryCatch() function will not abort the entire for loop in case of the error in one iteration
   tryCatch({
     # execute this code below for debugging:
-    # i <- 35
+    # i <- 1
     
   # extract current magic number id
   trading_system <- vector_systems[i]
   # get trading summary data only for one system 
-  trading_systemDF <- DFT1 %>% filter(MagicNumber == trading_system)
+  trading_systemDF <- DFT2 %>% filter(MagicNumber == trading_system)
   # try to extract market type information for that system
-  DFT1_MT <- try(import_data_mt(path_T1, trading_system), silent = TRUE)
+  DFT2_MT <- try(import_data_mt(path_T2, trading_system), silent = TRUE)
   # go to the next i if there is no data
-  if(class(DFT1_MT)[1]=="try-error") { next }
+  if(class(DFT2_MT)[1]=="try-error") { next }
     # joining the data with market type info
-    trading_systemDF <- inner_join(trading_systemDF, DFT1_MT, by = "TicketNumber")
+    trading_systemDF <- inner_join(trading_systemDF, DFT2_MT, by = "TicketNumber")
     # write this data for further debugging or tests
     # write_rds(trading_systemDF,path = "test_data/data_trades_markettype.rds")
     
@@ -111,10 +117,10 @@ for (i in 1:length(vector_systems)) {
     #control <- list(alpha = 0.5, gamma = 0.5, epsilon = 0.5)
     #control <- list(alpha = 0.9, gamma = 0.9, epsilon = 0.9)
     #control <- list(alpha = 0.8, gamma = 0.3, epsilon = 0.5)
-    control <- list(alpha = 0.3, gamma = 0.6, epsilon = 0.1) 
+    #control <- list(alpha = 0.3, gamma = 0.6, epsilon = 0.1) 
     # -----
     #==============================================================================
-    
+    control <- read_rds(paste0(path_control_files,"/", trading_system, ".rds"))
     
     # perform reinforcement learning and return policy
     policy_tr_systDF <- generate_RL_policy(trading_systemDF, states = states,actions = actions,
@@ -141,36 +147,36 @@ for (i in 1:length(vector_systems)) {
 # stopping all systems when macroeconomic event is present
 # this will be covered in the Course #5 of the Lazy Trading Series!
 # -------------------------
-if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
-  DF_NT <- read_csv(file= file.path(path_T1, "01_MacroeconomicEvent.csv"), col_types = "i")
-  if(DF_NT[1,1] == 1) {
-    # disable trades
-    if(!class(DFT1)[1]=='try-error'){
-      DFT1 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-        # write commands to disable systems
-        writeCommandViaCSV(path_T1)}
-    if(!class(DFT3)[1]=='try-error'){
-      DFT3 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
-        writeCommandViaCSV(path_T3)}
-    
-    
-  }
-  # enable systems of T1 in case they were disabled previously
-  if(DF_NT[1,1] == 0) {
-    # enable trades
-    if(!class(DFT1)[1]=='try-error'){
-      DFT1 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-        # write commands to disable systems
-        writeCommandViaCSV(path_T1)}
-    # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-    if(!class(DFT3)[1]=='try-error'){
-      DFT3 %>%
-        group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
-        writeCommandViaCSV(path_T3)}
-    
-  }
-  
-}
+# if(file.exists(file.path(path_T1, "01_MacroeconomicEvent.csv"))){
+#   DF_NT <- read_csv(file= file.path(path_T1, "01_MacroeconomicEvent.csv"), col_types = "i")
+#   if(DF_NT[1,1] == 1) {
+#     # disable trades
+#     if(!class(DFT1)[1]=='try-error'){
+#       DFT1 %>%
+#         group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
+#         # write commands to disable systems
+#         writeCommandViaCSV(path_T1)}
+#     if(!class(DFT3)[1]=='try-error'){
+#       DFT3 %>%
+#         group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 0) %>% 
+#         writeCommandViaCSV(path_T3)}
+#     
+#     
+#   }
+#   # enable systems of T1 in case they were disabled previously
+#   if(DF_NT[1,1] == 0) {
+#     # enable trades
+#     if(!class(DFT1)[1]=='try-error'){
+#       DFT1 %>%
+#         group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
+#         # write commands to disable systems
+#         writeCommandViaCSV(path_T1)}
+#     # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
+#     if(!class(DFT3)[1]=='try-error'){
+#       DFT3 %>%
+#         group_by(MagicNumber) %>% select(MagicNumber) %>% mutate(IsEnabled = 1) %>% 
+#         writeCommandViaCSV(path_T3)}
+#     
+#   }
+#   
+# }

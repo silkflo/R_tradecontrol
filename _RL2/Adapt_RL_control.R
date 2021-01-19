@@ -3,6 +3,16 @@
 # Preferrably to be used only with the courses Lazy Trading see: https://vladdsm.github.io/myblog_attempt/index.html
 # https://www.udemy.com/your-trading-control-reinforcement-learning/?couponCode=LAZYTRADE4-10
 # PURPOSE: Adapt RL control parameters and write them to the file
+#' @examples
+#' source("E:/trading/Git/R_tradecontrol/import_data.R") 
+#' path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
+#' DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
+#' path_control_files = "E:/trading/Git/R_tradecontrol/_RL2/control"
+
+
+#' trading_system <- 1201214
+
+
 Adapt_RL_control <- function(DFT2, path_T2, path_control_files){
 
 library(tidyverse) 
@@ -33,10 +43,7 @@ source("E:/trading/Git/R_tradecontrol/import_data.R")
 source("E:/trading/Git/R_tradecontrol/_RL2/write_control_parameters.R")
 source("E:/trading/Git/R_tradecontrol/_RL2/log_RL_progress.R")
  
-#  path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/tester/Files/"
-#  path_control_files = "E:/trading/Git/R_tradecontrol/_RL2/control"
-#  DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
-  
+
   # -------------------------
 # Define terminals path addresses, from where we are going to read/write data
 # -------------------------
@@ -48,9 +55,7 @@ source("E:/trading/Git/R_tradecontrol/_RL2/log_RL_progress.R")
 # read data from trades in terminal 1
 # -------------------------
 # uncomment code below to test functionality without MT4 platform installed
-#DFT2 <- try(import_data(trade_log_file = "_TEST_DATA/OrdersResultsT1.csv",
-#                        demo_mode = T),
-#            silent = TRUE)
+# DFT2 <- try(import_data(trade_log_file = "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/OrdersResultsT2.csv",demo_mode = T),silent = TRUE)
 
 # Vector with unique Trading Systems
 vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()

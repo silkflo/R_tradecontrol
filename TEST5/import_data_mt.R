@@ -15,6 +15,10 @@
 #' @export
 #'
 #' @examples
+#' 
+#'   path_terminal <-  "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
+#'  system_number <- 9142202
+#' 
 import_data_mt <- function(path_terminal, system_number){
   # path_terminal <- "C:/Program Files (x86)/FxPro - Terminal1/MQL4/Files/"
   # system_number <- 8139124

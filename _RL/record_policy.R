@@ -19,7 +19,7 @@ library(tidyverse)
  
 record_policy <- function(x, last_result, trading_system, path_sandbox){
   # debugging
-  # trading_system <- 8118105
+  # trading_system <- 1201214
   # last_result <- "tradeloss"
   # x <- policy_tr_systDF
   # path_sandbox <- "C:/Program Files (x86)/AM MT4 - Terminal 3/tester/files/"

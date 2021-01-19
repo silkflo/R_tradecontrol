@@ -7,7 +7,7 @@
 # packages used *** make sure to install these packages
 library(tidyverse) #install.packages("tidyverse")
 library(lubridate) #install.packages("lubridate") 
-
+library(lazytrade)
 # ----------- Applied Logic -----------------
 # -- Read trading results from Terminal 2
 # -- Split trading results from Terminal 2 into categories using profit factor
@@ -29,9 +29,10 @@ library(lubridate) #install.packages("lubridate")
 # Used Functions
 #-----------------
 # *** make sure to customize this path
-source("E:/trading/Git/R_tradecontrol/import_data.R")
-source("E:/trading/Git/R_tradecontrol/get_profit_factorDF.R")
-source("E:/trading/Git/R_tradecontrol/writeCommandViaCSV.R")
+
+# source("E:/trading/Git/R_tradecontrol/import_data.R")
+# source("E:/trading/Git/R_tradecontrol/get_profit_factorDF.R")
+# source("E:/trading/Git/R_tradecontrol/write_command_via_csv.R")
 
 # -------------------------
 # Define terminals path addresses, from where we are going to read/write data
@@ -70,7 +71,7 @@ DFT2_L %>%
   select(MagicNumber) %>%
   mutate(IsEnabled = 1) %>% 
   # Write command "allow"
-  writeCommandViaCSV(path_T2)
+  write_command_via_csv(path_T2)
 
 #### DECIDE IF TRADING ON THE T3 ACCOUNT #### -----------------------------
 # Last 10 orders on DEMO && pr.fact >= 2 start trade T3
@@ -81,7 +82,7 @@ DFT2_L %>%
   select(MagicNumber) %>% 
   mutate(MagicNumber = MagicNumber + 100, IsEnabled = 1) %>% 
   # Write command "allow"
-  writeCommandViaCSV(path_T3)
+  write_command_via_csv(path_T3)
 
 #### DECIDE IF NOT TO TRADING ON THE T3 ACCOUNT #### -----------------------------
 # 4. Last 10 orders on DEMO && pr.fact < 1.6 stop trade T3
@@ -92,7 +93,7 @@ DFT2_L %>%
   select(MagicNumber) %>% 
   mutate(MagicNumber = MagicNumber + 100, IsEnabled = 0) %>% 
   # Write command "allow"
-  writeCommandViaCSV(path_T3)
+  write_command_via_csv(path_T3)
 
 
 ifelse(get_profit_factorDF(DFT2_L,10)< 1.2, flag<-1, flag <-0)
@@ -127,7 +128,7 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv")) & flag == 0){
         select(MagicNumber) %>% 
         mutate(IsEnabled = 0) %>% 
         # write commands to disable systems
-        writeCommandViaCSV(path_T2)
+        write_command_via_csv(path_T2)
       }
     if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
       DF_NT %>%
@@ -135,7 +136,7 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv")) & flag == 0){
           inner_join(DFT3, by = "MagicNumber") %>%
           select(MagicNumber) %>% 
           mutate(IsEnabled = 0) %>% 
-          writeCommandViaCSV(path_T3)
+          write_command_via_csv(path_T3)
       }
     
     
@@ -150,7 +151,7 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv")) & flag == 0){
         select(MagicNumber) %>% 
         mutate(IsEnabled = 1) %>% 
         # write commands to disable systems
-        writeCommandViaCSV(path_T2)}
+        write_command_via_csv(path_T2)}
     # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
     if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
       DF_NT %>%
@@ -158,6 +159,7 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv")) & flag == 0){
         inner_join(DFT3, by = "MagicNumber") %>%
         select(MagicNumber) %>% 
         mutate(IsEnabled = 1) %>% 
-        writeCommandViaCSV(path_T3)
+        write_command_via_csv(path_T3)
       }
 }
+

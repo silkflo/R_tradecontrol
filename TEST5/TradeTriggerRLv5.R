@@ -3,8 +3,8 @@
 # Copyright (C) 2018 Vladimir Zhbanko
 # Preferrably to be used only with the courses Lazy Trading see: https://vladdsm.github.io/myblog_attempt/index.html
 # https://www.udemy.com/your-trading-control-reinforcement-learning/?couponCode=LAZYTRADE4-10
-# PURPOSE: Analyse trade results in Terminal 1 and Trigger or Stop Trades in Terminal 3
-# DETAILS: Trades are analysed and RL model is created for each single Expert Advisor
+# PURPOSE: Analyze trade results in Terminal 1 and Trigger or Stop Trades in Terminal 3
+# DETAILS: Trades are analyzed and RL model is created for each single Expert Advisor
 #        : Q states function is calculated, whenever Action 'ON' is > than 'OFF' trade trigger will be active   
 #        : Results are written to the file of the MT4 Trading Terminal
 # NOTE:    TEST4
@@ -23,6 +23,11 @@ library(tidyverse) #install.packages("tidyverse")
 library(lubridate) #install.packages("lubridate") 
 library(ReinforcementLearning) #devtools::install_github("nproellochs/ReinforcementLearning")
 library(magrittr)
+library(lazytrade)
+
+source("E:/trading/Git/R_tradecontrol/TEST5/record_policy_mt_rl.R")
+source("E:/trading/Git/R_tradecontrol/TEST5/import_data_mt.R")
+
 
 # ----------- Applied Logic -----------------
 # -- Read trading results from Terminal 1
@@ -36,36 +41,36 @@ library(magrittr)
 # Used Functions (to make code more compact). See detail of each function in the repository
 #-----------------
 # *** make sure to customize this path
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/writeCommandViaCSV.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/apply_policy.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/data_4_RL.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/import_data_mt.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/generate_RL_policy.R")
- source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/record_policy.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/writeCommandViaCSV.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/apply_policy.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/data_4_RL.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/import_data.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/import_data_mt.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/generate_RL_policy.R")
+# source("C:/Users/fxtrams/Documents/000_TradingRepo/R_tradecontrol/TEST5/record_policy.R")
 # -------------------------
 # Define terminals path addresses, from where we are going to read/write data
 # -------------------------
 # terminal 1 path *** make sure to customize this path
-path_T1 <- "C:/Program Files (x86)/FxPro - Terminal1/MQL4/Files/"
+path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
 
 # terminal 3 path *** make sure to customize this path
-path_T4 <- "C:/Program Files (x86)/FxPro - Terminal3/MQL4/Files/"
+path_T3 <- "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/"
 
 # -------------------------
 # read data from trades in terminal 1
 # -------------------------
-DFT1 <- try(import_data(path_T1, "OrdersResultsT1.csv"), silent = TRUE)
+DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
 # -------------------------
 # read data from trades in terminal 3
 # -------------------------
-DFT4 <- try(import_data(path_T4, "OrdersResultsT3.csv"), silent = TRUE)
+DFT3 <- try(import_data(path_T3, "OrdersResultsT3.csv"), silent = TRUE)
 
 # Vector with unique Trading Systems
-vector_systems <- DFT1 %$% MagicNumber %>% unique() %>% sort()
+vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()
 
 # For debugging: summarise number of trades to see desired number of trades was achieved
-DFT1_sum <- DFT1 %>% 
+DFT2_sum <- DFT2 %>% 
   group_by(MagicNumber) %>% 
   summarise(Num_Trades = n()) %>% 
   arrange(desc(Num_Trades))
@@ -75,18 +80,18 @@ for (i in 1:length(vector_systems)) {
   # tryCatch() function will not abort the entire for loop in case of the error in one iteration
   tryCatch({
     # execute this code below for debugging:
-    # i <- 2
+    # i <- 3
     
   # extract current magic number id
   trading_system <- vector_systems[i]
   # get trading summary data only for one system 
-  trading_systemDF <- DFT1 %>% filter(MagicNumber == trading_system)
+  trading_systemDF <- DFT2 %>% filter(MagicNumber == trading_system)
   # try to extract market type information for that system
-  DFT1_MT <- try(import_data_mt(path_T1, trading_system), silent = TRUE)
+  DFT2_MT <- try(import_data_mt(path_T2, trading_system), silent = TRUE)
   # go to the next i if there is no data
-  if(class(DFT1_MT)[1]=="try-error") { next }
+  if(class(DFT2_MT)[1]=="try-error") { next }
     # joining the data with market type info
-    trading_systemDF <- inner_join(trading_systemDF, DFT1_MT, by = "TicketNumber")
+    trading_systemDF <- inner_join(trading_systemDF, DFT2_MT, by = "TicketNumber")
     # write this data for further debugging or tests
     # write_rds(trading_systemDF,path = "test_data/data_trades_markettype.rds")
     
@@ -112,11 +117,11 @@ for (i in 1:length(vector_systems)) {
     
     
     # perform reinforcement learning and return policy
-    policy_tr_systDF <- generate_RL_policy(trading_systemDF, states = states,actions = actions,
+    policy_tr_systDF <- rl_generate_policy_mt(trading_systemDF, states = states,actions = actions,
                                            control = control)
     
     # record policy to the sandbox of Terminal 3, this should be analysed by EA
-    record_policy(x = policy_tr_systDF, trading_system = trading_system, path_sandbox = path_T4)
+    record_policy_mt_rl(x = policy_tr_systDF, trading_system = trading_system, path_terminal = path_T3)
     
     
 

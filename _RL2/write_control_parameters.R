@@ -9,10 +9,17 @@
 #' @export
 #'
 #' @examples
+#' 
+#' source("E:/trading/Git/R_tradecontrol/_RL2/log_RL_progress.R")
+#' source("E:/trading/Git/R_tradecontrol/import_data.R") 
+#' x <- try(import_data(trade_log_file = "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/OrdersResultsT2.csv",demo_mode = T),silent = TRUE)
+#' path_control_files = "E:/trading/Git/R_tradecontrol/_RL2/control"
+
+#' 
+#' 
 write_control_parameters <- function(x, path_control_files){
 
-  x <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
-   path_control_files = "E:/trading/Git/R_tradecontrol/_RL2/control"
+
   
 require(tidyverse)
 require(ReinforcementLearning)

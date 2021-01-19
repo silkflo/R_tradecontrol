@@ -26,6 +26,9 @@
 #'                        last_trade = latest_trade, path_sandbox = path_T4)
 #' 
 #' 
+#' 
+#'  
+#' 
 apply_policy <- function(trading_system, model, last_trade, path_sandbox){
   # debugging
   # trading_system

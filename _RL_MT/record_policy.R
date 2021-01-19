@@ -16,11 +16,11 @@ record_policy <- function(x, trading_system, path_sandbox){
   # debugging
   # trading_system <- 8139101
   # x <- policy_tr_systDF
-  # path_sandbox <- "C:/Program Files (x86)/FxPro - Terminal3/MQL4/Files/"
+  # path_sandbox <- "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/"
 # derive which terminal should be enabled (using path to sandbox) and using variable 'addition'
-  is_T3 <- str_detect(path_sandbox, "Terminal3") 
+  is_T3 <- str_detect(path_sandbox, "3/") 
   if(is_T3 == TRUE) { addition <- 200 }
-  is_T4 <- str_detect(path_sandbox, "Terminal4")
+  is_T4 <- str_detect(path_sandbox, "4/")
   if(is_T4 == TRUE) { addition <- 300 }
 
   # -------------------------

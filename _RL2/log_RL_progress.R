@@ -9,16 +9,39 @@
 #' @export
 #'
 #' @examples
+#'
+#' require(magrittr)
+#'  source("E:/trading/Git/R_tradecontrol/import_data.R") 
+#'  path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
+#'  DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
+#'  states <- c("tradewin", "tradeloss")
+#'  actions <- c("ON", "OFF")
+#'  control <- list(alpha = 0.7, gamma = 0.3, epsilon = 0.1)
+#' 
+#' vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()
+
+#' DFT2_sum <- DFT2 %>%
+#'  group_by(MagicNumber) %>% 
+#'  summarise(Num_Trades = n(),
+#'            Mean_profit = sum(Profit)) %>% 
+#'  arrange(desc(Num_Trades))
+#' 
+#' 
+#'  trading_system1 <- vector_systems[1]
+#'  trading_systemDF1 <- DFT2 %>% filter(MagicNumber == trading_system1)
+#'  x <- trading_systemDF1
+#' 
+#'  trading_system2 <- vector_systems[2]
+#'  trading_systemDF2 <- DFT2 %>% filter(MagicNumber == trading_system2)
+#'  y <- trading_systemDF2
+#' 
+#' 
 log_RL_progress <- function(x, states, actions, control){
   
   require(tidyverse)
   require(ReinforcementLearning)
   require(magrittr)
   
-  # x <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
-  # states <- c("tradewin", "tradeloss")
-  # actions <- c("ON", "OFF")
-  # control <- list(alpha = 0.7, gamma = 0.3, epsilon = 0.1)
   
   # add dummy tupples with states and actions with minimal reward
   d_tupple <- data.frame(State = states,
@@ -31,7 +54,10 @@ log_RL_progress <- function(x, states, actions, control){
                                  s_new = "NextState",iter = 1, control = control)
   
   # add rows of the x one by one to gradually update this model
-  for (i in 2:310) {
+  
+  
+  
+  for (i in 2:nrow(x)) {
     # i <- 6
     # State 
     State <- x[i-1,] %>% mutate(State = ifelse(Profit>0, "tradewin", ifelse(Profit<0, "tradeloss", NA))) %$% State
